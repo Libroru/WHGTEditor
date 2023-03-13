@@ -1,6 +1,7 @@
 from enum import Enum
+import asyncio
 from asciimatics.screen import Screen
-from asciimatics.event import MouseEvent
+from asciimatics.event import MouseEvent, KeyboardEvent
 
 class BlockType(Enum):
     HASHTAG = "#"
@@ -55,27 +56,27 @@ def draw_line_from_positions(screen, mouseX, mouseY):
     if(mouse1 != None and mouse2 != None):
                     mouse1 = None
                     mouse2 = None
-    
+
 
 def draw_map(screen):
     while True:
         global line_direction
-
-        mouseInput = screen.get_event()
-        keyboardInput = screen.get_key()
-
-        if keyboardInput == screen.KEY_RIGHT or keyboardInput == screen.KEY_LEFT:
-            line_direction = LineDirection.HORIZONTAL
-
-        if keyboardInput == screen.KEY_UP or keyboardInput == screen.KEY_DOWN:
-            line_direction = LineDirection.VERTICAL
         
-        if mouseInput is not None and isinstance(mouseInput, MouseEvent):
-            if mouseInput.buttons == MouseEvent.LEFT_CLICK:
+
+        event = screen.get_event()
+
+        if event is not None and isinstance(event, KeyboardEvent):
+            if event.key_code == screen.KEY_RIGHT or event.key_code == screen.KEY_LEFT:
+                line_direction = LineDirection.HORIZONTAL
+            elif event.key_code == screen.KEY_UP or event.key_code == screen.KEY_DOWN:
+                line_direction = LineDirection.VERTICAL
+
+        if event is not None and isinstance(event, MouseEvent):
+            if event.buttons == MouseEvent.LEFT_CLICK:
                 #draw_block_on_mouse(screen, mouseInput.x, mouseInput.y, BlockType.HASHTAG)
-                draw_line_from_positions(screen, mouseInput.x, mouseInput.y)
+                draw_line_from_positions(screen, event.x, event.y)
 
         screen.refresh()
-        
+
 
 Screen.wrapper(draw_map)
