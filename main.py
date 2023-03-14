@@ -1,5 +1,6 @@
 from enum import Enum
 import asyncio
+import pyperclip
 from asciimatics.screen import Screen
 from asciimatics.event import MouseEvent, KeyboardEvent
 
@@ -14,10 +15,24 @@ class LineDirection(Enum):
 
 line_direction = LineDirection.HORIZONTAL
 
+level = []
+
+
 mouse1 = None
 mouse2 = None
 
+def append_array(posX, posY, BlockType: BlockType):
+    global level # Add array entry on mouse click
+                 # Remove array entry on mouse click with empty building block
+    if(not BlockType == BlockType.EMPTY):
+         level.append([posX, posY, BlockType])
+    else:
+         level.remove([posX, posY])
+    formatted_string = str(level).replace("<BlockType.HASHTAG: '#'>", "BlockType.HASHTAG")
+    pyperclip.copy(formatted_string)
+
 def draw_block_on_mouse(screen, posX, posY, BlockType: BlockType):
+    append_array(posX, posY, BlockType.value)
     screen.print_at(BlockType.value, # Enum BlockType, which value represents characters, e.g.: '#' or 'O'
                             posX, posY, # Represents the x and y value of a currently selected 2d array (in order)
                             colour=screen.COLOUR_WHITE,
@@ -38,6 +53,15 @@ def draw_line_from_positions(screen, mouseX, mouseY):
     elif(mouse2 == None):
         mouse2 = [mouseX, mouseY] # Set second position
         if line_direction == LineDirection.HORIZONTAL:
+            
+            index = 0
+            while index <= abs(mouse2[0] - mouse1[0]):
+                if mouse2[0] >= mouse1[0]:
+                    append_array(mouse1[0] + index, mouse1[1], BlockType.HASHTAG)
+                elif mouse2[0] < mouse1[0]:
+                    append_array(mouse1[0] - index, mouse1[1], BlockType.HASHTAG)
+                index += 1
+
             screen.print_at("W", # Prints ending point on X-Axis
                                     mouseX, mouse1[1],
                                     colour=screen.COLOUR_WHITE,
@@ -46,6 +70,14 @@ def draw_line_from_positions(screen, mouseX, mouseY):
             screen.draw(mouse2[0], mouse1[1], char="#")
 
         else:
+            index = 0
+            while index <= abs(mouse2[1] - mouse1[1]):
+                if mouse2[1] >= mouse1[1]:
+                    append_array(mouse1[0], mouse1[1] + index, BlockType.HASHTAG)
+                elif mouse2[1] < mouse1[1]:
+                    append_array(mouse1[0], mouse1[1] - index, BlockType.HASHTAG)
+                index += 1
+
             screen.print_at("W", # Prints ending point on Y-Axis
                                     mouse1[0], mouseY,
                                     colour=screen.COLOUR_WHITE,
