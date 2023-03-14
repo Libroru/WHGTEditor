@@ -12,6 +12,9 @@ To run the project locally you'll need the folloing dependencies:
 
 # Controls
 > `TAB` = Change drawing mode
+
 > `1-0` = Changes the current block
+
 > `Left Click` = Places the block or starts a line
+
 > `Arrow Keys` = Changes line direction (vertical or horizontal)
