@@ -53,6 +53,10 @@ def print_at(screen, posX: int, posY: int, text_color = None, background_color =
         colour=text_color,
         bg=background_color)
     
+def format_array():
+    formatted_string = str(level).replace("<BlockType.HASHTAG: '#'>", "BlockType.HASHTAG")
+    pyperclip.copy(formatted_string)
+
 
 def append_array(posX: int, posY: int, BlockType: BlockType):
     """
@@ -73,21 +77,23 @@ def append_array(posX: int, posY: int, BlockType: BlockType):
             if posX in i and posY in i:
                 del level[level.index(i)]
 
-    formatted_string = str(level).replace("<BlockType.HASHTAG: '#'>", "BlockType.HASHTAG")
-    pyperclip.copy(formatted_string)
+    format_array()
 
 
 
-def draw_block_on_mouse(screen, posX, posY, BlockType: BlockType):
+def draw_block_on_mouse(screen, posX: int, posY: int):
     """
     A function that draws a single block given by the BlockType onto the screen at posX and posY
     """
 
-    append_array(posX, posY, BlockType)
-    print_at(screen, posX, posY, text=BlockType)
+    global selected_block
+
+    print_at(screen, posX, posY, text=selected_block)
+    append_array(posX, posY, BlockType=selected_block)
+    format_array()
 
 
-def draw_line_from_positions(screen, mouseX, mouseY):
+def draw_line_from_positions(screen, mouseX: int, mouseY: int):
     """
     A function that calculates and draws a line onto the screen.
     To do this, the function saves the coordinates of the starting point (mouse1),
@@ -202,7 +208,7 @@ def draw_map(screen):
         if event is not None and isinstance(event, MouseEvent):
             if event.buttons == MouseEvent.LEFT_CLICK:
                 if drawing_mode == DrawingMode.SINGLE:
-                    draw_block_on_mouse(screen, event.x, event.y, BlockType.HASHTAG)
+                    draw_block_on_mouse(screen, event.x, event.y)
                 else:
                     draw_line_from_positions(screen, event.x, event.y)
 

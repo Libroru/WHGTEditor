@@ -9,6 +9,10 @@ The level editor for the World's Hardest Game Terminal game
 To run the project locally you'll need the folloing dependencies:
 > asciimatics = "1.14.0^"
 
+# Usage
+
+Draw your level onto the canvas. Your finished level will be copied to the clipboard.
+The level is saved and copied to the clipboard after every action.
 
 # Controls
 > `TAB` = Change drawing mode
