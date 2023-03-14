@@ -8,3 +8,10 @@ The level editor for the World's Hardest Game Terminal game
 
 To run the project locally you'll need the folloing dependencies:
 > asciimatics = "1.14.0^"
+
+
+# Controls
+> `TAB` = Change drawing mode
+> `1-0` = Changes the current block
+> `Left Click` = Places the block or starts a line
+> `Arrow Keys` = Changes line direction (vertical or horizontal)
