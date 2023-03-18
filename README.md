@@ -12,12 +12,17 @@ To run the project locally you'll need the folloing dependencies:
 # Usage
 
 Draw your level onto the canvas. Your finished level will be copied to the clipboard.
-The level is saved and copied to the clipboard after every action.
+The level is saved and copied to the level.txt file in your runtime folder after every action.
 
 # Controls
+
+These controls all use the lower case variants of their key. E.g.: "P" -> "p" use this instead of capital P
+
 > `TAB` = Change drawing mode
 
 > `1-0` = Changes the current block
+
+> `P` = Places the player spawn point
 
 > `Left Click` = Places the block or starts a line
 

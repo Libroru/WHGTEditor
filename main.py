@@ -1,5 +1,6 @@
 from enum import Enum
-import pyperclip
+import os
+import ast
 from asciimatics.screen import Screen
 from asciimatics.event import MouseEvent, KeyboardEvent
 
@@ -8,6 +9,7 @@ class BlockType(Enum):
     HASHTAG = "#"
     CIRCLE = "O"
     LINE_POINT = "W"
+    PLAYER = "P"
     EMPTY = " "
 
 # Used for collision checking
@@ -53,10 +55,63 @@ def print_at(screen, posX: int, posY: int, text_color = None, background_color =
         colour=text_color,
         bg=background_color)
     
-def format_array():
-    formatted_string = str(level).replace("<BlockType.HASHTAG: '#'>", "BlockType.HASHTAG")
-    pyperclip.copy(formatted_string)
+def format_level(list_object, direction):
+    list_object = str(list_object)
+    if direction == 0:
+        list_object = list_object.replace("<BlockType.HASHTAG: '#'>", "BlockType.HASHTAG")
+        list_object = list_object.replace("<BlockType.CIRCLE: 'O'>", "BlockType.CIRCLE")
+        list_object = list_object.replace("<BlockType.PLAYER: 'P'>", "BlockType.PLAYER")
+        return list_object
+    elif direction == 1:
+        list_object = list_object.replace("BlockType.HASHTAG", "<BlockType.HASHTAG: '#'>")
+        list_object = list_object.replace("BlockType.CIRCLE", "<BlockType.CIRCLE: 'O'>")
+        list_object = list_object.replace("BlockType.PLAYER", "<BlockType.PLAYER: 'P'>")
+        return list_object
 
+def save_level():
+    global level
+
+    file = open("./level.txt", "w")
+    file.write(format_level(level, 0))
+    file.close()
+
+
+
+def assign_new_array(string: str):
+    """
+    Transforms the given string into a list of 3D arrays.
+    """
+
+    new_array = []
+    for i in range(0, len(string), 3):
+        temp_array = string[i:i+3]
+        new_array.append(temp_array)
+    return new_array
+
+def load_level(screen):
+    """
+    This is the worst function I've ever written.
+    Loads the level.txt file inside of the runtime directory and then
+    firstly transforms the string and then passes it to assing_new_array().
+    After that it loops through the retrieved list and places a BlockType for every entry.
+    """
+
+    global level
+    
+    file = open("level.txt", "r")
+
+    # This transforms the save into a for the algorithm readable format.
+    no_brackets = file.read()[1:]
+    no_brackets = no_brackets[:-1]
+    no_brackets = no_brackets.replace("[", "")
+    no_brackets = no_brackets.replace("]", "")
+    no_spaces = no_brackets.split(", ")
+
+    for i in assign_new_array(no_spaces):
+        # We are using __members__[] because assign_new_array returns e.g.: `BlockType.HASHTAG` as a string
+        # This then has to be transformed into a BlockType. To do this we first split the string at the period.
+        # Then we take the second half of the string: `HASHTAG` and then assign that to a BlockType value.
+        print_at(screen, int(i[0]), int(i[1]), text=BlockType.__members__[str(i[2]).split(".")[1]])
 
 def append_array(posX: int, posY: int, BlockType: BlockType):
     """
@@ -77,9 +132,19 @@ def append_array(posX: int, posY: int, BlockType: BlockType):
             if posX in i and posY in i:
                 del level[level.index(i)]
 
-    format_array()
+    save_level()
 
+def check_if_player_exists(screen):
+    """
+    This function checks if another player block is already placed and then deletes that if a new one is placed
+    """
 
+    global level
+
+    for i in level:
+        if BlockType.PLAYER in i:
+            print_at(screen, i[0], i[1], text=BlockType.EMPTY)
+            del level[level.index(i)]
 
 def draw_block_on_mouse(screen, posX: int, posY: int):
     """
@@ -88,9 +153,11 @@ def draw_block_on_mouse(screen, posX: int, posY: int):
 
     global selected_block
 
+    if selected_block == BlockType.PLAYER:
+        check_if_player_exists(screen)
     print_at(screen, posX, posY, text=selected_block)
     append_array(posX, posY, BlockType=selected_block)
-    format_array()
+    save_level()
 
 
 def draw_line_from_positions(screen, mouseX: int, mouseY: int):
@@ -167,12 +234,14 @@ def draw_map(screen):
     It handles the input and outputs the currently selected BlockType and `line_direction` on the bottom left.
     """
 
+    load_level(screen)
+
     while True:
         global line_direction
         global selected_block
 
         global drawing_mode
-        
+
         # Calculates the full width of the frame and then creats a string that fills the entire line
         width = screen.width
         blank_line = ' ' * width
@@ -197,10 +266,15 @@ def draw_map(screen):
                 line_direction = LineDirection.VERTICAL
             elif event.key_code == screen.KEY_TAB:
                 drawing_mode = DrawingMode.LINE if (drawing_mode == DrawingMode.SINGLE) else DrawingMode.SINGLE
+                if selected_block == BlockType.PLAYER:
+                    selected_block = BlockType.HASHTAG
             elif event.key_code == ord('1'):
                 selected_block = BlockType.HASHTAG
             elif event.key_code == ord('2'):
                 selected_block = BlockType.CIRCLE
+            elif event.key_code == ord('p'):
+                if drawing_mode == DrawingMode.SINGLE:
+                    selected_block = BlockType.PLAYER
             elif event.key_code == ord('0'):
                 selected_block = BlockType.EMPTY
 
