@@ -1,6 +1,4 @@
 from enum import Enum
-import os
-import ast
 from asciimatics.screen import Screen
 from asciimatics.event import MouseEvent, KeyboardEvent
 
@@ -55,6 +53,7 @@ def print_at(screen, posX: int, posY: int, text_color = None, background_color =
         colour=text_color,
         bg=background_color)
     
+    
 def format_level(list_object, direction):
     list_object = str(list_object)
     if direction == 0:
@@ -71,7 +70,7 @@ def format_level(list_object, direction):
 def save_level():
     global level
 
-    file = open("./level.txt", "w")
+    file = open("level.txt", "w")
     file.write(format_level(level, 0))
     file.close()
 
@@ -90,7 +89,6 @@ def assign_new_array(string: str):
 
 def load_level(screen):
     """
-    This is the worst function I've ever written.
     Loads the level.txt file inside of the runtime directory and then
     firstly transforms the string and then passes it to assing_new_array().
     After that it loops through the retrieved list and places a BlockType for every entry.
@@ -100,18 +98,19 @@ def load_level(screen):
     
     file = open("level.txt", "r")
 
-    # This transforms the save into a for the algorithm readable format.
-    no_brackets = file.read()[1:]
-    no_brackets = no_brackets[:-1]
-    no_brackets = no_brackets.replace("[", "")
-    no_brackets = no_brackets.replace("]", "")
-    no_spaces = no_brackets.split(", ")
+    if file.read() == "":
+        return
+    file.seek(0) # Making sure that we are not reaching EOF
 
-    for i in assign_new_array(no_spaces):
+    # This transforms the save into a for the algorithm readable format.
+    no_brackets = file.read().replace("[", "").replace("]", "").split(", ")
+
+    for i in assign_new_array(no_brackets):
         # We are using __members__[] because assign_new_array returns e.g.: `BlockType.HASHTAG` as a string
         # This then has to be transformed into a BlockType. To do this we first split the string at the period.
         # Then we take the second half of the string: `HASHTAG` and then assign that to a BlockType value.
         print_at(screen, int(i[0]), int(i[1]), text=BlockType.__members__[str(i[2]).split(".")[1]])
+        append_array(int(i[0]), int(i[1]), BlockType.__members__[str(i[2]).split(".")[1]])
 
 def append_array(posX: int, posY: int, BlockType: BlockType):
     """
@@ -146,6 +145,14 @@ def check_if_player_exists(screen):
             print_at(screen, i[0], i[1], text=BlockType.EMPTY)
             del level[level.index(i)]
 
+def check_for_boundaries(posX, posY):
+    if posX > 90:
+        return False
+    if posY > 15:
+        return False
+    return True
+
+
 def draw_block_on_mouse(screen, posX: int, posY: int):
     """
     A function that draws a single block given by the BlockType onto the screen at posX and posY
@@ -155,12 +162,13 @@ def draw_block_on_mouse(screen, posX: int, posY: int):
 
     if selected_block == BlockType.PLAYER:
         check_if_player_exists(screen)
-    print_at(screen, posX, posY, text=selected_block)
-    append_array(posX, posY, BlockType=selected_block)
-    save_level()
+    if check_for_boundaries(posX, posY):
+        print_at(screen, posX, posY, text=selected_block)
+        append_array(posX, posY, BlockType=selected_block)
+        save_level()
 
 
-def draw_line_from_positions(screen, mouseX: int, mouseY: int):
+def draw_line_from_positions(screen, posX: int, posY: int):
     """
     A function that calculates and draws a line onto the screen.
     To do this, the function saves the coordinates of the starting point (mouse1),
@@ -177,50 +185,51 @@ def draw_line_from_positions(screen, mouseX: int, mouseY: int):
 
     global line_direction
 
-    if(mouse1 == None):
-        mouse1 = [mouseX, mouseY] # Set first position
-        print_at(screen, mouseX, mouseY, text=BlockType.LINE_POINT) # Prints the first point of the line
+    if check_for_boundaries(posX, posY):
+        if(mouse1 == None):
+            mouse1 = [posX, posY] # Set first position
+            print_at(screen, posX, posY, text=BlockType.LINE_POINT) # Prints the first point of the line
 
-    elif(mouse2 == None):
-        mouse2 = [mouseX, mouseY] # Set second position
-        if line_direction == LineDirection.HORIZONTAL:
-            
-            # A while loop that places `index` blocks
-            index = 0
-            while index <= abs(mouse2[0] - mouse1[0]):
-                if mouse2[0] >= mouse1[0]:
-                    append_array(mouse1[0] + index, mouse1[1], selected_block)
-                elif mouse2[0] < mouse1[0]:
-                    append_array(mouse1[0] - index, mouse1[1], selected_block)
-                index += 1
+        elif(mouse2 == None):
+            mouse2 = [posX, posY] # Set second position
+            if line_direction == LineDirection.HORIZONTAL:
+                
+                # A while loop that places `index` blocks
+                index = 0
+                while index <= abs(mouse2[0] - mouse1[0]):
+                    if mouse2[0] >= mouse1[0]:
+                        append_array(mouse1[0] + index, mouse1[1], selected_block)
+                    elif mouse2[0] < mouse1[0]:
+                        append_array(mouse1[0] - index, mouse1[1], selected_block)
+                    index += 1
 
-            print_at(screen, mouseX, mouse1[1], text=BlockType.LINE_POINT) # Prints the end point of a line bound to the x-axis
-            screen.move(mouse1[0], mouse1[1])
-            screen.draw(mouse2[0], mouse1[1], char=selected_block.value)
+                print_at(screen, posX, mouse1[1], text=BlockType.LINE_POINT) # Prints the end point of a line bound to the x-axis
+                screen.move(mouse1[0], mouse1[1])
+                screen.draw(mouse2[0], mouse1[1], char=selected_block.value)
 
-            # Prints over "W", which is used to mark the beginning and end point of a line
-            print_at(screen, mouse1[0], mouse1[1])
-            print_at(screen, mouse2[0], mouse1[1])
+                # Prints over "W", which is used to mark the beginning and end point of a line
+                print_at(screen, mouse1[0], mouse1[1])
+                print_at(screen, mouse2[0], mouse1[1])
 
-        else:
-            # A while loop that places `index` blocks
-            index = 0
-            while index <= abs(mouse2[1] - mouse1[1]):
-                if mouse2[1] >= mouse1[1]:
-                    append_array(mouse1[0], mouse1[1] + index, selected_block)
-                elif mouse2[1] < mouse1[1]:
-                    append_array(mouse1[0], mouse1[1] - index, selected_block)
-                index += 1
+            else:
+                # A while loop that places `index` blocks
+                index = 0
+                while index <= abs(mouse2[1] - mouse1[1]):
+                    if mouse2[1] >= mouse1[1]:
+                        append_array(mouse1[0], mouse1[1] + index, selected_block)
+                    elif mouse2[1] < mouse1[1]:
+                        append_array(mouse1[0], mouse1[1] - index, selected_block)
+                    index += 1
 
 
-            print_at(screen, mouse1[0], mouseY, text=BlockType.LINE_POINT) # Prints end of the line bound to the y-axis
-            screen.move(mouse1[0], mouse1[1])
-            screen.draw(mouse1[0], mouse2[1], char=selected_block.value)
-            
-            # Prints over "W", which is used to mark the beginning and end point of a line
-            print_at(screen, mouse1[0], mouse1[1])
-            print_at(screen, mouse1[0], mouse2[1])
-            
+                print_at(screen, mouse1[0], posY, text=BlockType.LINE_POINT) # Prints end of the line bound to the y-axis
+                screen.move(mouse1[0], mouse1[1])
+                screen.draw(mouse1[0], mouse2[1], char=selected_block.value)
+                
+                # Prints over "W", which is used to mark the beginning and end point of a line
+                print_at(screen, mouse1[0], mouse1[1])
+                print_at(screen, mouse1[0], mouse2[1])
+                
     # Resets point values
     if(mouse1 != None and mouse2 != None):
                     mouse1 = None
